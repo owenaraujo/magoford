@@ -9,7 +9,7 @@ numeralFormat.register("locale", "es", {
     thousands: ".",
     decimal: ",",
   },
-  ordinal: function(number) {
+  ordinal: function (number) {
     return number === 1 ? "er" : "ème";
   },
   currency: {
@@ -23,6 +23,31 @@ import "jspdf-autotable";
 import { createToast } from "mosha-vue-toastify";
 export default createStore({
   state: {
+    modalInfo: false,
+    factura: {
+      user_id: {
+        username: null
+      },
+
+      factura: null,
+      productos: [
+        {
+          precio: null,
+
+          cantidad: null,
+
+          producto_id: null,
+        },
+      ],
+      nota: null,
+
+      status: null,
+      credito: null,
+      createdAt: null
+    },
+
+    img: null,
+    modalImg: false,
     statusVenta: false,
     search: "hola",
     productosVenta: [],
@@ -53,7 +78,8 @@ export default createStore({
         transition: "bounce",
       },
     },
-    api: "https://servermagoford.herokuapp.com/api",
+    api2: "http://93.189.88.179:3000/api",
+    api: "http://localhost:3000/api",
     sidebars: false,
     logged: false,
     token: null,
@@ -61,8 +87,10 @@ export default createStore({
     datosCliente: {},
     linkclientes: "/clientes",
     usuarios: [],
-    proveedores: [],
-    usuario: {},
+    ubicaciones: [],
+    usuario: {
+      rol: { grado: null }
+    },
     ventas: [],
     clientesActivos: [],
     productosTrue: [],
@@ -74,6 +102,13 @@ export default createStore({
     system: { id: "", info: { dolar: "" } },
   },
   mutations: {
+    CerrarFactura(state) {
+      state.modalInfo = false
+    },
+    MostrarFactura(state, payload) {
+      state.factura = payload
+      state.modalInfo = true
+    },
     saveCliente(state, payload) {
       state.datosCliente = payload;
       state.dataCliente = true;
@@ -86,9 +121,9 @@ export default createStore({
 
       state.productosTrue = productos;
     },
-    saveProveedores(state, payload) {
-      state.proveedores = [];
-      state.proveedores = payload;
+    saveUbicaciones(state, payload) {
+      state.ubicaciones = [];
+      state.ubicaciones = payload;
     },
     async verifyUser(state) {
       try {
@@ -120,15 +155,19 @@ export default createStore({
       }
     },
     async logear(state, payload) {
-      const { data } = await axios.get(
-        `${state.api}/usuarios/${payload.usuario}`
-      );
-      state.usuario = data;
-      state.token = payload.value;
-      localStorage.token = payload.value;
-      localStorage.id = payload.usuario;
-      createToast(`bienvenido ${data.username}`, state.toask.success);
-      state.logged = true;
+      try {
+        const { data } = await axios.get(
+          `${state.api}/usuarios/${payload.usuario}`
+        );
+        state.usuario = data;
+        state.token = payload.value;
+        localStorage.token = payload.value;
+        localStorage.id = payload.usuario;
+        createToast(`bienvenido ${data.username}`, state.toask.success);
+        state.logged = true;
+      } catch (error) {
+        console.log(error)
+      }
     },
     saveClientes(state, payload) {
       state.clientes = payload;
@@ -143,29 +182,25 @@ export default createStore({
     cambiarRuta(state, ruta) {
       state.linkclientes = ruta.ruta;
     },
+    mostrarImg(state, img) {
+      state.modalImg = true
+
+      state.img = img
+    },
     agregar(state, payload) {
       state.productos.push(payload);
     },
     updateProveedor(state, payload) {
-      state.proveedores.map((item) =>
+      state.ubicaciones.map((item) =>
         item._id === payload ? (item.status = !item.status) : 0
       );
     },
     saveToCar(state, payload) {
-      const num = state.productosTrue.filter((item) => {
-        if (item._id.toString() === payload.producto_id) {
-          let resta = item.cantidad - payload.cantidad;
-          if (resta >= 0) {
-            item.cantidad = resta;
-            return item;
-          }
-        }
-      });
-      if (num.length === 0) return;
+      
       const val = state.productosVenta.filter((item) => {
         if (item.producto_id === payload.producto_id) {
           item.cantidad = item.cantidad + payload.cantidad;
-          item.imei.push({ value: null });
+          
 
           return item;
         }
@@ -192,13 +227,23 @@ export default createStore({
         }
       });
     },
+    cerrarModalImage(state) {
+      state.img = null
+      state.modalImg = false
+    }
   },
+
   actions: {
+    cerrarModalImg({ commit }) {
+      commit("cerrarModalImage")
+    },
     guardarVenta({ state }, productos) {
       state.ventaActual = productos;
     },
     vaciarVenta({ state }) {
-      state.productosVenta = [];
+      state.productosVenta = [
+        
+      ];
       state.datosCliente = {};
       state.dataCliente = false;
       state.statusVenta = false;
@@ -208,7 +253,7 @@ export default createStore({
       let datos = state.ventaActual;
 
       let productos = datos.productos;
-      let cliente = datos.cliente_id;
+      // let cliente = datos.cliente_id;
       const timeformat = (value) => {
         moment.locale("es");
         let fecha = `${value}`;
@@ -242,12 +287,12 @@ export default createStore({
       doc.setFontSize(10);
       //headder factura
       let number = numeralFormat(datos.factura).format("000000");
-      doc.text(`Cliente:    ${cliente.nombre} ${cliente.apellido}`, 15, 36);
+      // doc.text(`Cliente:    ${cliente.nombre} ${cliente.apellido}`, 15, 36);
       doc.text(`Factura Nro:  ${number} `, 165, 34);
-      doc.text(`Rif:    ${cliente.dni} `, 130, 36);
-      doc.text(`Direccion:    ${cliente.direccion}`, 15, 40);
+      //doc.text(`Rif:    ${cliente.dni} `, 130, 36);
+      // doc.text(`Direccion:    ${cliente.direccion}`, 15, 40);
       doc.text(`fecha:  ${timeformat(datos.createdAt).inicio}`, 165, 40);
-      doc.text(`Telefono:    ${cliente.telefono}`, 15, 44);
+      // doc.text(`Telefono:    ${cliente.telefono}`, 15, 44);
       doc.text(`vence:    ${timeformat(datos.createdAt).final}`, 165, 44);
       //doc.text(`Condicion:   contado`, 120, 44);
 
@@ -319,28 +364,27 @@ export default createStore({
     },
     async comprar({ state }, nota) {
       const user = state.usuario._id;
-      const cliente = state.datosCliente._id;
+      
       const productos = state.productosVenta;
 
-      const dolar = state.system.info.dolar;
+      
 
       const newFactura = {
         user_id: user,
-        cliente_id: cliente,
+      
         productos: productos,
         nota: nota.nota,
-        dolar: dolar,
-        prestamo: nota.prestamo,
+        TipoPago: nota.pago,
       };
 
-      let { data } = await axios.post(`${state.api}/ventas`, newFactura, {
-        headers: { xtoken: state.token },
-      });
-      createToast(data.value);
-      if (data.status === true) {
-        state.statusVenta = true;
-        state.ventaActual = data.data;
-      }
+       let { data } = await axios.post(`${state.api}/ventas`, newFactura, {
+         headers: { xtoken: state.token },
+       });
+       createToast(data.value);
+       if (data.status === true) {
+         state.statusVenta = true;
+         state.ventaActual = data.data;
+       }
     },
     deleteStore({ state, commit }, indice) {
       const cantidad = state.productosVenta[indice].cantidad;
@@ -348,18 +392,8 @@ export default createStore({
       commit("addProductoInicial", { cantidad: cantidad, id: id });
       state.productosVenta.splice(indice, 1);
     },
-    agregarToCarrito({ commit, state }, newVenta) {
-      let carrito = state.productosTrue.filter((item) => {
-        if (item._id.toString() == newVenta.producto_id) {
-          let total = item.cantidad - newVenta.cantidad;
-
-          if (total >= 0) return item;
-          else {
-            0;
-          }
-        }
-      });
-      if (carrito.length > 0) commit("saveToCar", newVenta);
+    agregarToCarrito({ commit }, newVenta) {
+       commit("saveToCar", newVenta);
     },
     guardarCliente({ commit }, cliente) {
       commit("saveCliente", cliente);
@@ -377,9 +411,9 @@ export default createStore({
     sendUrl({ commit }, ruta) {
       commit("cambiarRuta", ruta);
     },
-    async getProveedores({ state, commit }) {
-      const { data } = await axios.get(`${state.api}/proveedores`);
-      commit("saveProveedores", data);
+    async getUbicaciones({ state, commit }) {
+      const { data } = await axios.get(`${state.api}/ubicaciones`);
+      commit("saveUbicaciones", data);
     },
     login({ commit }, data) {
       data.status ? commit("logear", data) : 0;
@@ -415,11 +449,20 @@ export default createStore({
       });
       status.length < 0 ? 0 : commit("agregar", producto);
     },
+    verImagen({ commit }, img) {
+      commit("mostrarImg", img)
+    },
     deleteProccessVenta({ state }) {
       state.productosVenta = [];
       state.datosCliente = {};
       state.dataCliente = false;
     },
+    getInfoVenta({ commit }, e) {
+      commit("MostrarFactura", e)
+    },
+    cerrarModalInfo() {
+      this.commit("CerrarFactura")
+    }
   },
   modules: {},
 });

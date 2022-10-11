@@ -1,57 +1,26 @@
 <template>
   <div v-if="usuario.rol.grado <= 2" class="container-fluid">
-    <div class="text-right">
-      <router-link
-        to="/clientes/add"
-        @click="sendUrl()"
-        class="mt-2 btn btn-primary text-rigth btn_new_cliente"
-        ><i class="fas fa-user-plus"></i> Nuevo Cliente</router-link
-      >
-    </div>
+    <div class="text-right"></div>
     <div class="row">
-      <div class="col-sm-3">
-        <h4 class="">Datos del Cliente</h4>
-        <div v-show="dataCliente">
-          <h5 style="font-size: 16px; text-transform: uppercase; color: blue">
-            {{ datosCliente.nombre }} {{ datosCliente.apellido }}
-          </h5>
-          <p>
-            {{ datosCliente.dni }}
-          </p>
-        </div>
-        <div v-show="!dataCliente">
-          <label for="buscarCliente">busqueda de cliente</label>
-
-          <input
-            autocomplete="off"
-            v-model="buscarClientes"
-            id="buscarCliente"
-            type="text"
-            class="form-control mb-2"
-          />
-          <div class="resultado" v-if="buscarClientes">
-            <select multiple class="custom-select scrollbar-light-blue">
-              <option
-                @click="selectCliente(item)"
-                v-for="item in clientes"
-                :key="item._id"
-                :value="item._id"
-                v-show="
-                  item.nombre
-                    .toLowerCase()
-                    .indexOf(buscarClientes.toLowerCase()) != -1 ||
-                  item.dni
-                    .toLowerCase()
-                    .indexOf(buscarClientes.toLowerCase()) != -1
-                "
-              >
-                {{ item.nombre }}
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
       <div class="col-lg-12">
+        <div class="form-group form-floating mb-3 ">
+              <label>ubicacion</label>
+              <select
+                @change="findProductos()"
+                id="ubicacion"
+                v-model="tienda"
+                name="ubicacion"
+                class="form-control"
+              >
+                <option
+                  v-for="ubicacion in ubicaciones"
+                  :key="ubicacion"
+                  :value="ubicacion._id"
+                >
+                  {{ ubicacion.nombre }}
+                </option>
+              </select>
+            </div>
         <h4 class="text-center">Datos Venta</h4>
 
         <div class="table-responsive">
@@ -59,11 +28,11 @@
             <thead class="thead-dark">
               <tr>
                 <th width="100px">Código</th>
-                <th>modelo</th>
+                <th>descripcion</th>
                 <th>Stock</th>
-                <th width="100px">IVA</th>
-                <th class="textright">Precio</th>
-                <th class="textright">Precio Total</th>
+                <!-- <th width="100px">IVA</th> -->
+                <!-- <th class="textright">Precio</th> -->
+                <!-- <th class="textright">Precio Total</th> -->
                 <th>Acciones</th>
               </tr>
               <tr>
@@ -84,59 +53,21 @@
                         :key="item._id"
                         :value="item._id"
                         v-show="
-                          item.codigo
+                          item.id_product.codigo
                             .toLowerCase()
                             .indexOf(buscarProducto.toLowerCase()) != -1
                         "
                       >
-                        {{ item.nombre }}-{{ item.codigo }}
+                        {{ item.id_product.descripcion }}-{{ item.id_product.codigo }}
                       </option>
                     </select>
                   </div>
                 </td>
                 <td id="txt_descripcion">
-                  {{ inputsAgregar.modelo || "-" }}
+                  {{ inputsAgregar.id_product.descripcion }}
                 </td>
                 <td id="txt_existencia">{{ inputsAgregar.cantidad || 0 }}</td>
-                <td>
-                  <Popper
-                    class="dark-popper"
-                    arrow
-                    hover
-                    placement="left"
-                    :content="numeralFormat( (total - inputsAgregar.precio )* dolar|| 0  ) + ' Bs'"
-                  >
-                  {{numeralFormat( total - inputsAgregar.precio, "0,0.0") || 0 }}$
-                  </Popper>
-                  
-                </td>
-                <td id="txt_precio" class="textright">
-                   <Popper
-                    class="dark-popper"
-                    arrow
-                    hover
-                    placement="left"
-                    :content="numeralFormat( (inputsAgregar.precio )* dolar|| 0  ) + ' Bs'"
-                  >
-                   {{ inputsAgregar.precio || 0 }}$(+{{inputsAgregar.iva}}% iva )
-                  </Popper>
-                 
-                </td>
-                <td id="txt_precio_total" class="txtright">
 
-                  <Popper
-                    class="dark-popper"
-                    arrow
-                    hover
-                    placement="left"
-                    :content="numeralFormat( (total )* dolar|| 0  ) + ' Bs'"
-                  >
-                   {{ total || 0 }}$
-                  </Popper>
-                  
-                  
-                  
-                  </td>
                 <td>
                   <button
                     @click="agregarCarrito()"
@@ -152,14 +83,15 @@
               </tr>
               <tr>
                 <th>Código</th>
-                <th>modelo</th>
-                <th>IMEI</th>
+                <th>nombre</th>
+                <!-- <th>IMEI</th> -->
                 <th>cantidad</th>
-                <th class="textright">Precio</th>
-                <th class="textright">Precio Total</th>
+                <!-- <th class="textright">Precio</th> -->
+                <!-- <th class="textright">Precio Total</th> -->
                 <th>Acciones</th>
               </tr>
             </thead>
+           
             <tbody id="detalle_venta">
               <ListProductos
                 v-for="(producto, index) in productosVenta"
@@ -168,50 +100,6 @@
                 :producto="producto"
               />
             </tbody>
-
-            <tfoot id="detalle_totales">
-              <tr>
-                <td colspan="6" class="textright">Sub-total</td>
-                <td>
-                  <Popper
-                    class="dark-popper"
-                    arrow
-                    hover
-                    placement="left"
-                    :content="numeralFormat(totalVenta * dolar, '0,00') + ' Bs'"
-                  >
-                    {{ totalVenta }}
-                  </Popper>
-                </td>
-              </tr>
-              <tr>
-                <td colspan="6" class="textright">iva</td>
-                <td>
-                  <Popper
-                    class="dark-popper"
-                    arrow
-                    hover
-                    placement="left"
-                    :content="numeralFormat(iva * dolar) + ' Bs'"
-                    >{{ iva }}</Popper
-                  >
-                </td>
-              </tr>
-              <tr>
-                <td colspan="6" class="textright">total a pagar</td>
-                <td>
-                  <Popper
-                    class="dark-popper"
-                    arrow
-                    hover
-                    placement="left"
-                    :content="numeralFormat((iva + totalVenta) * dolar) + ' Bs'"
-                  >
-                    {{ iva + totalVenta }}
-                  </Popper>
-                </td>
-              </tr>
-            </tfoot>
           </table>
         </div>
         <div class="col-lg-12 text-center">
@@ -233,7 +121,7 @@
     </div>
   </div>
 
-<NoAccess v-else/>
+  <NoAccess v-else />
   <!-- modal -->
   <!-- Button trigger modal -->
 
@@ -256,7 +144,7 @@
             <button
               type="button"
               class="close"
-              @click="modalVenta = false"
+              @click="newVenta"
               data-dismiss="modal"
               aria-label="Close"
             >
@@ -264,52 +152,55 @@
             </button>
           </div>
           <div class="modal-body">
-           <div v-if="!statusVenta">
-              <div class="form-check">
+            <div v-if="!statusVenta">
+              <div class="form-check d-none">
+                <input
+                  class="form-check-input"
+                  v-model="prestamo"
+                  type="checkbox"
+                  id="defaultCheck1"
+                />
+                <label class="form-check-label" for="defaultCheck1">
+                  Reportar venta como prestamo
+                </label>
+              </div>
+
+              <label for="inputNota"></label>
               <input
-                class="form-check-input"
-                v-model="prestamo"
-                type="checkbox"
-                id="defaultCheck1"
+                v-model="notaVenta"
+                type="text"
+                id="inputNota"
+                placeholder="agregar una nota"
+                class="form-control"
               />
-              <label class="form-check-label" for="defaultCheck1">
-                Reportar venta como prestamo
-              </label>
+              <input
+                v-model="pago"
+                type=""
+                id=""
+                placeholder="tipo de pago "
+                class="form-control mt-4"
+              />
             </div>
-
-            <label for="inputNota"></label>
-            <input
-              v-model="notaVenta"
-              type="text"
-              id="inputNota"
-              placeholder="agregar una nota"
-              class="form-control"
-            />
-           </div>
-           <div v-if="statusVenta" class="text-center">
-<p>
-            <strong class="mt-4">que desea hacer?</strong> 
-
-</p>
-            <br>
-             <button @click="newVenta" class="btn btn-primary mr-2">registrar otra venta</button>
-             <button @click="generarPdf" class="btn btn-success">inprimir factura</button>
-           </div>
+            <div v-if="statusVenta" class="text-center">
+              <p>
+                <strong class="mt-4">que desea hacer?</strong>
+              </p>
+              <br />
+              <button @click="newVenta" class="btn btn-primary mr-2">
+                registrar otra venta
+              </button>
+              <!-- <button @click="generarPdf" class="btn btn-success">inprimir factura</button> -->
+            </div>
           </div>
           <div class="modal-footer">
             <button
-              @click="modalVenta = false"
-              
+              @click="newVenta"
               class="btn btn-secondary"
               data-dismiss="modal"
             >
               Cerrar
             </button>
-            <button
-              
-              @click="guardarCompra()"
-              class="btn btn-primary"
-            >
+            <button @click="guardarCompra()" class="btn btn-primary">
               Comprar
             </button>
           </div>
@@ -322,100 +213,87 @@
 </template>
 
 <script>
-import NoAccess from '../403.vue'
+import NoAccess from "../403.vue";
+import axios from "axios";
 import { useStore } from "vuex";
 import { computed, ref } from "@vue/reactivity";
 import ListProductos from "./listProductsVenta.vue";
-import Popper from "vue3-popper";
-import { createToast } from 'mosha-vue-toastify';
+import { createToast } from "mosha-vue-toastify";
 export default {
   props: ["param"],
-  components: { ListProductos, Popper, NoAccess },
+  components: { ListProductos, NoAccess },
   setup() {
     //respuestas automaticas
     let store = useStore();
-    store.dispatch("getProductos");
-    store.dispatch("buscar");
-    store.dispatch("getClientes");
     //ref
-    
-    let dolar = computed(() => store.state.system.info.dolar);
+    let infoCliente = false;
     let modalVenta = ref(false);
     let buscarProducto = ref("");
-    let inputsAgregar = ref({});
+    let inputsAgregar = ref({id_product:{
+
+    }});
     let cantidad = ref(1);
     let buscarClientes = ref("");
-    //computed
-    let toast = computed(()=> store.state.toask)
-    let usuario = computed(()=> store.state.usuario)
-    let productosVenta = computed(() => store.state.productosVenta);
-    let statusVenta = computed(()=> store.state.statusVenta)
     let notaVenta = ref("");
+    let pago = ref("");
+    let tienda = ref();
     let prestamo = ref(false);
+    let productos = ref([]);
+    //computed
+    const ubicaciones = computed(() => store.state.ubicaciones);
+    let toast = computed(() => store.state.toask);
+    let usuario = computed(() => store.state.usuario);
+    let productosVenta = computed(() => store.state.productosVenta);
+    let statusVenta = computed(() => store.state.statusVenta);
+    let api = computed(() => store.state.api);
+    let clientes = computed(() => store.state.clientesActivos);
     let total = computed(() => {
       let obj = inputsAgregar.value;
       let iva = ((obj.precio * obj.iva) / 100) * cantidad.value;
       let totalSinIva = obj.precio * cantidad.value;
-
+      
       if (!totalSinIva) totalSinIva = 0;
       if (!iva) iva = 0;
-
+      
       return totalSinIva + iva;
     });
-    let dataCliente = computed(() => store.state.dataCliente);
-    let datosCliente = computed(() => store.state.datosCliente);
-    let totalVenta = computed(() =>
-      productosVenta.value.reduce(
-        (sum, item) => sum + item.cantidad * item.precio,
-        0
-      )
-    );
-    let iva = computed(() =>
-      productosVenta.value.reduce(
-        (sum, item) => sum + (item.cantidad * item.precio * item.iva) / 100,
-        0
-      )
-    );
-    let productos = computed(() => store.state.productosTrue);
-    let clientes = computed(() => store.state.clientesActivos);
+    
+    
+    store.dispatch("getUbicaciones");
+    
     //funciones
-    function newVenta(){
-      store.dispatch("vaciarVenta")
-      notaVenta.value = ''
-      prestamo.value = false
-      modalVenta.value = false
-
+    async function findProductos() {
+      const { data } = await axios.get(
+        `${api.value}/productos/stock/${tienda.value}`
+        );
+        productos.value = data;
       }
+      function newVenta() {
+      store.dispatch("vaciarVenta");
+      notaVenta.value = "";
+      prestamo.value = false;
+      modalVenta.value = false;
+      cancelVenta();
+    }
     function selectCliente(cliente) {
       buscarClientes.value = "";
 
       store.dispatch("guardarCliente", cliente);
     }
     const sendUrl = () => {
-      const ruta = { ruta: "/ventas/add" };
+      const ruta = { ruta: "/manager/ventas/add" };
       store.dispatch("sendUrl", ruta);
     };
     function preGuardarCompra() {
-      if(!dataCliente.value) return createToast('especifique un cliente', toast.value.warning)
-      if(productosVenta.value.length ==0) return createToast('no se puede hacer una venta vacia', toast.value.warning)
-      let producto = productosVenta.value.map(item =>{
-        let imei = item.imei.map(e=>{ 
-          if(e.value) return true
-          else{ 
-            e.value = ''
-           return false}
-          }
-        
-        )
-        if (imei.indexOf(false) != -1) {
-          return false
-        }
-        else{ return true}
-      })
-      if(producto.indexOf(false) != -1) return createToast('el campo imei no puede estar vacio', toast.value.warning)
+      //  if(!dataCliente.value) return createToast('especifique un cliente', toast.value.warning)
+      if (productosVenta.value.length == 0)
+        return createToast(
+          "no se puede hacer una venta vacia",
+          toast.value.warning
+        );
+      
       modalVenta.value = true;
     }
-
     function selectProducto(producto) {
       buscarProducto.value = "";
       inputsAgregar.value = producto;
@@ -425,48 +303,67 @@ export default {
         cantidad.value = inputsAgregar.value.cantidad;
     }
     function agregarCarrito() {
-      const NewVenta = {
-        productName: inputsAgregar.value.nombre,
-        modelo: inputsAgregar.value.modelo,
-        marca: inputsAgregar.value.marca,
-        precio: inputsAgregar.value.precio,
-        codigo: inputsAgregar.value.codigo,
-        imei: [{ value: null }],
+      
+      const data = {
+        productName: inputsAgregar.value.id_product.descripcion,
+        precio: inputsAgregar.value.id_product.precio,
+        codigo: inputsAgregar.value.id_product.codigo,
         cantidad: cantidad.value,
-        iva: inputsAgregar.value.iva,
-        producto_id: inputsAgregar.value._id,
+        producto_id: inputsAgregar.value.id_product._id,
+        ubicacion_id: tienda.value
+
       };
-      store.dispatch("agregarToCarrito", NewVenta);
+      let carrito = productos.value.filter((item) => {
+        if (item.id_product._id.toString() == data.producto_id.toString()) {
+          
+          let total = item.cantidad - data.cantidad;
+item.cantidad= total
+          if (total >= 0) {
+            -item.cantidad 
+            return item;}
+          else {
+            0;
+          }
+        }
+      });
+      if (carrito.length > 0)  store.dispatch("agregarToCarrito", data);
     }
     function cancelVenta() {
       store.dispatch("deleteProccessVenta");
-      inputsAgregar.value = {};
+      inputsAgregar.value = {id_product:{
+
+}}
       cantidad.value = 1;
     }
-
-function generarPdf() {
-  store.dispatch("generarPdf")
-}
+    function generarPdf() {
+      store.dispatch("generarPdf");
+    }
     function guardarCompra() {
       // store.dispatch('generarPdf')
       store.dispatch("comprar", {
         nota: notaVenta.value,
-        prestamo: prestamo.value,
+        credito: prestamo.value,
+        pago: pago.value,
       });
     }
+    //acciones
+    
     return {
+      tienda,
+      findProductos,
       usuario,
+      infoCliente,
       newVenta,
       generarPdf,
       statusVenta,
-      dolar,
       prestamo,
       modalVenta,
       notaVenta,
+      pago,
+      ubicaciones,
       preGuardarCompra,
       guardarCompra,
-      iva,
-      totalVenta,
+
       cancelVenta,
       agregarCarrito,
       productosVenta,
@@ -475,16 +372,12 @@ function generarPdf() {
       cantidad,
       inputsAgregar,
       selectProducto,
-
       buscarProducto,
       sendUrl,
       selectCliente,
       productos,
       buscarClientes,
       clientes,
-
-      dataCliente,
-      datosCliente,
     };
   },
 };

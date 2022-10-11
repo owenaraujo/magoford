@@ -6,7 +6,7 @@
     
     <td>
       <router-link
-        :to="'/usuarios/add?'+ usuario._id"
+        :to="'/manager/usuarios/add?'+ usuario._id"
         class="btn btn-success"
         ><i class="fas fa-edit"></i> Editar</router-link
       >

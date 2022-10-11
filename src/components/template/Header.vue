@@ -79,10 +79,7 @@
                   </a>
                   <div class="dropdown-divider"></div>
 
-                  <router-link v-if="usuario.rol.grado <=1" class="dropdown-item d-none" to="/configuracion">
-                    <i class="fas fa-cog fa-sm fa-fw mr-2 text-gray-600"></i
-                    >configuracion
-                  </router-link>
+                  
                   <div class="dropdown-divider"></div>
                   <a class="dropdown-item" @click="salir()">
                     <i

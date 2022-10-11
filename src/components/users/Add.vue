@@ -3,7 +3,7 @@
     <!-- Page Heading -->
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
       <h1 class="h3 mb-0 text-gray-800">Panel de Administración</h1>
-      <router-link to="/usuarios" class="btn btn-primary mt-2"
+      <router-link to="/manager/usuarios" class="btn btn-primary mt-2"
         >Regresar</router-link
       >
     </div>
@@ -123,7 +123,7 @@ export default {
           const { value } = computed(() => store.state.usuarios);
 
           if (value.length === 0) {
-            router.push("/usuarios/add");
+            router.push("/manager/usuarios/add");
             return;
           }
           id = uri[1];
@@ -152,7 +152,7 @@ export default {
         const { data } = await axios.post(`${api.value}/usuarios/${id}`, usuario, {headers:{xtoken:token.value}});
         if (data.status) {
           createToast(data.value, toast.value.success);
-          router.push("/usuarios");
+          router.push("/manager/usuarios");
           newUser.value = {};
         } else {
           createToast(data.value, toast.value.danger);

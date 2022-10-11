@@ -1,43 +1,41 @@
 <template>
   <tr>
     <td>{{ producto.codigo }}</td>
-    <td>{{ producto.nombre }}</td>
-    <td class="d-none">
-     
-  <Popper
-    class="dark-popper"
-    arrow
-    hover
-    placement='right'
-    :content="numeralFormat((producto.precio*dolar)) +' Bs'"
-  >
-    <div>{{producto.precio}}</div>
-  </Popper>
+    <td>{{ producto.descripcion }}</td>
+    <td v-if="access <= 1">{{ producto.precio }}</td>
+   
+   
+    
 
-    </td>
-    <td>{{ producto.cantidad }}</td>
-    <td>{{ producto.ubicacion }}</td>
-
-    <td v-if="access <= 1">
+    <td >
+      <div
+      target="_blank"
+        @click="getImagen(producto.img)"
+        class="btn btn-primary ml-2">
+        <i class="fa fa-image"></i>
+        
+      </div>
       <router-link
-        :to="'/productos/add/cantidad?' + producto._id"
+      v-if="access <= 1"
+        :to="'/manager/productos/add/cantidad?' + producto._id"
         class="btn btn-primary ml-2"
         ><i class="fas fa-audio-description"></i
       ></router-link>
 
       <router-link
-        :to="'/productos/add?' + producto._id"
+      v-if="access <= 1"
+        :to="'/manager/productos/add?' + producto._id"
         class="btn btn-warning ml-2"
         ><i class="fas fa-edit"></i
       ></router-link>
 
-      <div class="confirmar d-inline">
+      <div class="confirmar d-inline" v-if="access <= 1">
         <button
           v-show="producto.status"
           @click="desactivarProducto(producto._id)"
           class="btn btn-danger ml-2"
         >
-          <i class="fas fa-trash-alt"></i>
+          <i class="fa fa-eye-slash"></i>
         </button>
 
         <button
@@ -45,7 +43,7 @@
           @click="activarProducto(producto._id)"
           class="btn btn-success ml-2"
         >
-          <i class="fas fa-check"></i>
+          <i class=" fa fa-eye"></i>
         </button>
       </div>
     </td>
@@ -57,11 +55,9 @@ import { createToast } from "mosha-vue-toastify";
 import axios from "axios";
 import { useStore } from "vuex";
 import { computed, ref } from "@vue/runtime-core";
-import Popper from "vue3-popper";
 
 export default {
   props: ["producto", 'access'],
-  components: { Popper },
 
   setup(props) {
     let producto = ref(props.producto);
@@ -77,12 +73,16 @@ export default {
       producto.value.status = true;
       createToast(data.value, toask.value.warning);
     }
+    function getImagen(e) {
+      store.dispatch("verImagen", e)
+    }
     async function desactivarProducto(id) {
       const { data } = await axios.delete(`${api.value}/productos/${id}`, {headers:{xtoken:token.value}});
       producto.value.status = false;
+      store.dispatch("getProductos")
       createToast(data.value, toask.value.danger);
     }
-    return { activarProducto, desactivarProducto , dolar};
+    return { activarProducto, desactivarProducto , dolar, getImagen};
   },
 };
 </script>

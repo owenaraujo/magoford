@@ -1,55 +1,36 @@
 <template>
-  <div v-if="usuario.rol.grado <=1">
-    
+  <div v-if="usuario.rol.grado <= 1">
     <div class="container-fluid mt-2">
       <!-- Page Heading -->
       <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Panel de Administración</h1>
-        <router-link to="/productos" class="btn btn-primary"
+        <router-link to="/manager/productos" class="btn btn-primary"
           >Regresar</router-link
         >
       </div>
 
       <!-- Content Row -->
       <div class="row">
+        
         <div class="col-lg-6 m-auto">
-          <form autocomplete="off">
-            <div class="form-group form-floating mb-3 ">
-              <label>ubicacion</label>
-              <select
-               
-                id="ubicacion"
-                v-model="producto.ubicacion"
-                name="proveedor"
-                class="form-control"
-              >
-                <option
-                  v-for="ubicaciones in ubicacion"
-                  :key="ubicaciones"
-                 
-                  :value="ubicaciones"
-                >
-                  {{ ubicaciones }}
-                </option>
-              </select>
-            </div>
+          <form
+            ref="NewForm"
+            enctype="multipart/form-data"
+            autocomplete="off"
+            @submit.prevent="sendProduct()"
+          >
+            
+            
             <div class="form-group form-floating mb-3 d-none">
               <label>Proveedor</label>
               <select
                 :class="{ 'is-invalid': producto.proveedor_id === '' }"
                 id="proveedor"
                 v-model="producto.proveedor_id"
-                name="proveedor"
+                name="ubicacion"
                 class="form-control"
               >
-                <option
-                  v-for="proveedor in proveedores"
-                  :key="proveedor.id"
-                  v-show="proveedor.status === true"
-                  :value="proveedor._id"
-                >
-                  {{ proveedor.nombre }}
-                </option>
+               
               </select>
             </div>
             <div class="mb-2" v-for="(item, index) of form" :key="index">
@@ -59,6 +40,7 @@
                 v-if="!item.number"
                 v-model="producto[item.valor]"
                 type="text"
+                :name="item.valor"
                 :placeholder="item.valor"
                 :id="item.valor"
                 class="form-control"
@@ -68,23 +50,31 @@
                 :class="{ 'is-invalid': producto[item.valor] === '' }"
                 v-model.number="producto[item.valor]"
                 type="Number"
+                :name="item.valor"
                 :placeholder="item.valor"
                 :id="item.valor"
                 class="form-control"
               />
             </div>
-             
-            <div  class="form-check mb-4 d-none"> 
-<input  class="form-check-input " v-model="producto.iva" type="checkbox" id="iva">
+            
+            <div class="form-check mb-4 d-none">
+              <input
+                class="form-check-input "
+                v-model="producto.iva"
+                type="checkbox"
+                id="iva"
+              />
               <label for="iva" class="form-check-label">iva 16%</label>
             </div>
-            <button
-              @click.prevent="sendProduct()"
-              value=""
-              class="btn btn-primary"
-            >
+            <div class="text-center">
+              <div class=" btn btn-secondary" id="div_file" >
+              <p id="texto">añadir imagen</p>
+              <input @change="selectIMagen()" class="form-control" type="file" id="img" name="img" accept="image/*" />
+            </div>
+            <button type="submit" value="" class="btn btn-primary">
               Guardar Producto
             </button>
+            </div>
           </form>
         </div>
       </div>
@@ -100,84 +90,50 @@ import { createToast } from "mosha-vue-toastify";
 import { useRouter } from "vue-router";
 import { computed } from "@vue/runtime-core";
 import axios from "axios";
-import NoAccess from '../403.vue'
+import NoAccess from "../403.vue";
 export default {
-  components:{NoAccess},
+  components: { NoAccess },
   setup() {
+    const router = useRouter();
+    const api = computed(() => store.state.api);
+
     const toask = computed(() => store.state.toask);
     const store = useStore();
-    const router = useRouter();
-    
-    store.dispatch("getProveedores");
-    const proveedores = computed(() => store.state.proveedores);
-    let ubicacion = ["barquisimeto","valencia", "el vigia"]
-    let token = computed(()=> store.state.token)
+
+    let token = computed(() => store.state.token);
+    const NewForm = ref();
     const form = ref([
-      { valor: "nombre" },
-      //{ valor: "marca" },
-   //   { valor: "modelo" },
-      { valor: "descripcion" },
-      { valor: "cantidad", number: true },
-      //{ valor: "precio", number: true },
       { valor: "codigo" },
-     
-    ])
+      { valor: "descripcion" },
+      { valor: "precio" ,number: true},
+    ]);
     let id = "";
     let producto = ref({
       proveedor_id: null,
       nombre: null,
+      img: null,
+      img_id: null
     });
-    const api = computed(() => store.state.api);
-    const sendProduct = async function () {
+    const sendProduct = async function() {
       try {
-        // if (!producto.value.proveedor_id) {
-        //   producto.value.proveedor_id = "";
-        //   return;
-        // }
-        // if (!producto.value.nombre) {
-        //   producto.value.nombre = "";
-        //   return;
-        // }
-        // if (!producto.value.marca) {
-        //   producto.value.marca = "";
-        //   return;
-        // }
-        // if (!producto.value.modelo) {
-        //   producto.value.modelo = "";
-        //   return;
-        // }
-        // if (!producto.value.descripcion) {
-        //   producto.value.descripcion = "";
-        //   return;
-        // }
-        // if (!producto.value.cantidad) {
-        //   producto.value.cantidad = "";
-        //   return;
-        // }
-        // if (!producto.value.precio) {
-        //   producto.value.precio = "";
-        //   return;
-        // }
-        // if (!producto.value.codigo) {
-        //   producto.value.codigo = "";
-        //   return;
-        // }
-        // if (!producto.value.iva) {
-        //   producto.value.iva = 0
-          
-        // }
-        // if (producto.value.iva) {
-        //   producto.value.iva = 16
-          
-        // }
+        console.log();
+        const imagen = new FormData(NewForm.value);
+
+        producto.value.imagen = imagen;
         const { data } = await axios.post(
           `${api.value}/productos/${id}`,
-          producto.value, {headers:{xtoken:token.value}}
+          imagen,
+          {
+            headers: {
+              xtoken: token.value,
+              "content-type": "multipart/form-data",
+            },
+          }
         );
 
         if (data.status === true) {
-         // producto.value = { proveedor_id: null };
-          router.push("/productos");
+          // producto.value = { proveedor_id: null };
+          router.push("/manager/productos");
           id = "";
           createToast(data.value, toask.value.success);
           return;
@@ -185,10 +141,13 @@ export default {
           createToast(data.value, toask.value.danger);
         }
       } catch (error) {
-          createToast('no se pudo conectar al servidor');
-
+        console.log(error);
+        createToast("no se pudo conectar al servidor");
       }
     };
+    function selectIMagen() {
+      createToast("imagen cargada con exito", toask.value.success)
+    }
     function buscarProduct() {
       try {
         let uri = window.location.href.split("?");
@@ -196,22 +155,56 @@ export default {
           const { value } = computed(() => store.state.productos);
 
           if (value.length === 0) {
-            router.push("/productos/add");
+            router.push("/manager/productos/add");
             return;
           }
           id = uri[1];
           const res = value.filter((item) => (item._id === id ? item : false));
 
-          !res ? (producto.value = {}) : (producto.value = res[0], !res[0].iva?res[0].iva =false : res[0].iva = true  ,delete form.value.splice(4, 2) );
+          !res
+            ? (producto.value = {})
+            : ((producto.value = res[0]),
+              !res[0].iva ? (res[0].iva = false) : (res[0].iva = true),
+              delete form.value.splice(4, 2));
         }
       } catch (error) {
         0;
       }
     }
     buscarProduct();
-    let usuario = computed(()=>store.state.usuario)
-    return { producto, form, sendProduct, proveedores, token , usuario, ubicacion};
+    let usuario = computed(() => store.state.usuario);
+    return {
+      producto,
+      form,
+      sendProduct,
+      token,
+      usuario,
+      
+      NewForm,
+      selectIMagen,
+    };
   },
 };
 </script>
+ <style>
+  p#texto{
+	text-align: center;
+	color:white;
+}
+  div#div_file{
+	position:relative;
+	margin:50px;
+	padding:10px;
+}
 
+input#img{
+	position:absolute;
+	top:0px;
+	left:0px;
+	right:0px;
+	bottom:0px;
+	width:100%;
+	height:100%;
+	opacity: 0;
+}
+ </style>
